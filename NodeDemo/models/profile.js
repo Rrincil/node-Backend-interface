@@ -1,13 +1,35 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema
 const profileSchema  = new Schema({
-  url:{
+  name:{
     type:String,
     required:true
   },
-  remark:{
+  num:{
+    type:Number,
+    required:true,
+    default:0
+  },
+  price:{
+    type:Number,
+    required:true,
+  },
+  start:{
+    type:Boolean,
+    required:true,
+    default:false
+  },  
+  imgurl:{
     type:String,
     required:true
+  },
+  shopname :{
+    type:String,
+    required:true    
+  }, 
+  data:{
+    type:Date,
+    default:Date.now
   }
 })
 

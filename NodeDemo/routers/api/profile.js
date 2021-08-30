@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router()
 const profile = require('../../models/profile')
 
+const multer = require('multer')
+
 const passport = require('passport');
 
 const { session } = require('passport');
@@ -15,41 +17,162 @@ router.get('/text',(req,res)=>{
 })
 
 
-//@router podt api/users/swiperadd
-//@desc 存入swiper的json数据
+//@router podt api/profile/add
+//@desc 存入json数据
 //@access public
-router.post('/swiperadd',(req,res)=>{
-  profile.findOne({url:req.body.url}).then((mes)=>{
-    if(mes){
-      console.log('已经有了这张照片');
-    }else{
-      const mes = new profile({
-        url:req.body.url,
-        remark:req.body.remark
+router.post("/add",(req,res)=>{
+  profile.findOne({
+    name:req.body.name
+  }).then(ret=>{
+    if(!ret){
+      console.log(ret);
+      const newprofile =new profile({})
+      const imgurl = 'http://localhost:3000/img/'
+      if(req.body.name) newprofile.name = req.body.name;
+      if(req.body.num) newprofile.num = req.body.num;  
+      if(req.body.imgurl) newprofile.imgurl = imgurl+req.body.imgurl;  
+      if(req.body.shopname) newprofile.shopname = req.body.shopname;
+      if(req.body.start) newprofile.start = req.body.start;
+      if(req.body.price) newprofile.price = req.body.price;
+      newprofile.save().then(profile=>{
+        res.json(profile)
+        res.status(200).json({mes:`成功加入购物车了`})
       })
-      mes.save()
-          .then(mes=>res.json(mes))
-          .catch(err=>console.log(err))
+    }else{
+      // console.log(ret.name);      
+      return  res.status(200).json({mes:`${ret.shopname}的${ret.name}之前已经在购物车了哟`})
     }
+
   })
+
 })
 
 
 
 
 
-//@router get api/users/swiper
-//@desc 获取swiper的json数据
+
+
+
+//@router get api/profile/getallmes
+//@desc 获取所有的json数据
 //@access private
-router.get('/swiper',(req,res)=>{
-  profile.findOne({url:req.body.url}).then(mes=>{
+router.get("/getallmes",(req,res)=>{
+  profile.find().then(mes=>{
     if (mes) {
       res.json(mes)
     }else{
-      console.log('没有这张照片');
+      res.status(404).json({mes:'没有任何内容'})
     }
+  }).catch(err=>{
+    res.status(404).json(err)
   })
 })
 
-module.exports = router
 
+
+//@router get api/profile/:id
+//@desc 获取单个json数据
+//@access public
+router.get("/:id",(req,res)=>{
+  profile.findOne({_id:req.params.id}).then(mes=>{
+    if (mes) {
+      res.json(mes)
+    }else{
+      res.status(404).json({mes:'没有相关内容'})
+    }
+  }).catch(err=>{
+    res.status(404).json(err)
+  })
+})
+
+
+
+//@router podt api/profile/edit
+//@desc 编辑json数据
+//@access public
+router.post("/edit/:id",(req,res)=>{
+
+
+  const newprofile =new profile({})
+  const imgurl = 'http://localhost:3000/img/'
+  if(req.body.name) newprofile.name = req.body.name;
+  if(req.body.num) newprofile.num = req.body.num;  
+  if(req.body.imgurl) newprofile.imgurl = imgurl+req.body.imgurl;  
+  if(req.body.shopname) newprofile.shopname = req.body.shopname;
+  if(req.body.start) newprofile.start = req.body.start;
+  if(req.body.price) newprofile.price = req.body.price;
+
+  profile.findByIdAndUpdate(
+    {_id:req.params.id},
+    {$set:newprofile},
+    {new:true}
+  ).then(profile=>{
+    res.json(profile)
+  })
+})
+
+
+//@router post api/profile/deconste/:id
+//@desc 删除json数据
+//@access public
+router.delete("/deldete/:id",(req,res)=>{
+  profile.findOneAndRemove({_id:req.params.id}).then(mes=>{
+    if (mes) {
+      mes.save().then(profile=>res.json(profile))
+    }else{
+      res.status(404).json({mes:'没有相关内容'})
+    }
+  }).catch(err=>{
+    res.status(404).json(err)
+  })
+})
+
+
+
+
+
+// var projectInfo = require('../projectInfo.json')
+// let PictureStore = require(PROXY).pictureStore
+ 
+// var storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, './public/upload')
+//   },
+//   filename: function (req, file, cb) {
+//     var str = file.originalname.split('.')
+//     cb(null, Date.now() + '.' + str[1])
+//   }
+// })
+// var upload = multer({storage: storage})
+ 
+// // 上传图片到图片仓库并返回上传的图片路径
+// router.post('/uploadImgs', upload.array('file', 20), function (req, res, next) {
+//   var arr = []
+//   for (var i in req.files) {
+//     arr.push(global.SERVICEADDRESS + '' + req.files[i].filename)
+//   }
+//   if (req.body.storeId) {
+//     PictureStore.updateOnePictureStore({_id: req.body.storeId}, {$addToSet: {pictureimgurlArr: {$each: arr}}}, (err, data) => {
+//       res.json({
+//         code: 200,
+//         data: arr
+//       })
+//     })
+//   } else {
+//     PictureStore.updateOnePictureStore({isCommon: true}, {$addToSet: {pictureimgurlArr: {$each: arr}}}, (err, data) => {
+//       res.json({
+//         code: 200,
+//         data: arr
+//       })
+//     })
+//   }
+// })
+
+
+
+
+
+
+
+module.exports = router
